@@ -4,11 +4,22 @@ from flask import Flask, request, redirect, jsonify, render_template_string, mak
 import jwt
 from jwcrypto import jwk
 
-# ===== Embedded Private JWK (Replace with your own private key) =====
-JWK_PRIVATE_JSON = """
-{
-}
-"""
+# ===== Load Private JWK Securely (file > env) =====
+JWK_PRIVATE_FILE = os.getenv("JWK_PRIVATE_FILE")  # e.g. /run/secrets/jwk_private.json
+JWK_PRIVATE_JSON = os.getenv("JWK_PRIVATE_JSON")  # fallback (less secure)
+
+def _load_private_jwk_json():
+    if JWK_PRIVATE_FILE and os.path.exists(JWK_PRIVATE_FILE):
+        with open(JWK_PRIVATE_FILE, "r", encoding="utf-8") as f:
+            return f.read()
+    if JWK_PRIVATE_JSON:
+        return JWK_PRIVATE_JSON
+    raise RuntimeError("No private JWK provided. Set JWK_PRIVATE_FILE or JWK_PRIVATE_JSON.")
+
+PRIV_JWK = jwk.JWK.from_json(_load_private_jwk_json())
+if "kid" not in json.loads(PRIV_JWK.export_public()):
+    PRIV_JWK["kid"] = uuid.uuid4().hex
+KID = json.loads(PRIV_JWK.export_public())["kid"]
 
 # ===== Basic Config =====
 ALG = "PS512"
@@ -17,11 +28,6 @@ AUDIENCE = "JWT API Simulation"
 LEEWAY_SECONDS = 2
 COOKIE_NAME = "session_jwt"
 COOKIE_EXP = "jwt_exp"  # Non-sensitive, only stores exp seconds for countdown
-
-PRIV_JWK = jwk.JWK.from_json(JWK_PRIVATE_JSON)
-if "kid" not in json.loads(PRIV_JWK.export_public()):
-    PRIV_JWK["kid"] = uuid.uuid4().hex
-KID = json.loads(PRIV_JWK.export_public())["kid"]
 
 def private_pem():
     return PRIV_JWK.export_to_pem(private_key=True, password=None)
@@ -161,7 +167,7 @@ DEMO_HTML = """
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>JWT Demo</title>
+<title>JWT API Simulation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <style>
 :root{
