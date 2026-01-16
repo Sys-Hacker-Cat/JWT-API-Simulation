@@ -254,7 +254,7 @@ body{
   display:flex; align-items:center; gap:6px; color:var(--muted); font-weight:600
 }
 .kbd{
-  border:1px solid var(--border); background:var(--pill); border-bottom-width:3px; padding:2px 6px; border-radius:8px; font-size:12px
+  border:1px solid var(--border); background:var(--pill); border-bottom-width:3px; padding:2px 6px; border-radius:8px; font-size:14px
 }
 .note{
   margin:12px 0 18px; padding:10px 12px; border-radius:10px; font-size:14px; color:var(--muted);
